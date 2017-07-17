@@ -1,0 +1,3 @@
+require "./pomfire"
+
+Pomfire.run
