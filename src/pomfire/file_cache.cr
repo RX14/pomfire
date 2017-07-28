@@ -6,6 +6,15 @@ class Pomfire::FileCache
   @mutex = Mutex.new
 
   def initialize(@b2 = B2::Client.new, @b2_bucket = ENV["POMF_B2_BUCKET"], @file_dir = ENV["POMF_CACHE_DIR"])
+    spawn do
+      loop do
+        size = @mutex.@queue.try(&.size)
+        if size && size != 0
+          puts "#{size} fibers waiting on b2!"
+        end
+        sleep 1.second
+      end
+    end
   end
 
   enum FileStatus
