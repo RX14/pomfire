@@ -1,38 +1,10 @@
 require "./spec_helper"
 
-private module SpecMethods
-  extend Spec::Methods
-end
-
-private def it(*args, **kwargs, &block)
-  if ENV["B2_ACCOUNT_ID"]? && ENV["B2_APPLICATION_KEY"]?
-    SpecMethods.it(*args, **kwargs, &block)
-  else
-    SpecMethods.pending(*args, **kwargs, &block)
-  end
-end
-
 private def validate_uri(uri)
   uri = URI.parse(uri) unless uri.is_a? URI
   uri.scheme.should eq("https")
   uri.host.should_not eq(nil)
   uri.path.should_not eq(nil)
-end
-
-module B2
-  class_property(test_client) { B2::Client.new }
-end
-
-private def with_bucket
-  bucket = B2.test_client.create_bucket("crystal-b2-test")
-  yield bucket
-ensure
-  begin
-    B2.test_client.delete_bucket(bucket) if bucket
-  rescue ex
-    STDERR.puts "Exception while deleting file:"
-    ex.inspect_with_backtrace(STDERR)
-  end
 end
 
 describe B2::Client do

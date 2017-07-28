@@ -1,6 +1,26 @@
 require "http"
 require "./b2/*"
 
+# class HTTP::Client
+#   def exec(request : HTTP::Request, &block)
+#     puts
+#     puts "==> #{request.method} #{request.resource} #{request.version}"
+#     p request.headers
+
+#     start_time = Time.now
+#     previous_def(request) do |response|
+#       puts "<== #{response.status_code} in #{(Time.now - start_time).total_milliseconds}ms"
+#       p response.headers
+
+#       wrapped_io = IO::Memory.new(response.body_io.gets_to_end)
+#       p wrapped_io.to_s
+#       new_response = HTTP::Client::Response.new(response.status_code, response.body?, response.headers, response.status_message, response.version, wrapped_io)
+#       puts
+#       yield new_response
+#     end
+#   end
+# end
+
 class B2::Client
   getter! authorisation : AuthoriseAccountResponse
 
