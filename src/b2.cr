@@ -87,16 +87,20 @@ class B2::Client
     delete_bucket(bucket.id)
   end
 
-  def download_file_by_name(bucket, name)
+  def download_file_by_name(bucket : String, name : String)
     headers = HTTP::Headers{"Authorization" => authorisation.authorisation_token}
     HTTP::Client.get(download_url(bucket, name), headers) do |response|
       if response.status_code == 200
         yield response.body_io
       else
-        error = Error.from_json(response.body_io)
+        error = ErrorResponse.from_json(response.body_io)
         raise APIError.new(error)
       end
     end
+  end
+
+  def download_file_by_name(bucket : Bucket, name : String)
+    download_file_by_name(bucket.name, name) { |io| yield io }
   end
 
   def get_upload_url(bucket_id : String)

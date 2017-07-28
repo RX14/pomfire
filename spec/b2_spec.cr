@@ -72,9 +72,21 @@ describe B2::Client do
     with_bucket do |bucket|
       begin
         file = B2.test_client.upload_file(bucket, "test.txt", "hello world")
-      rescue ex
-        p ex
-        raise ex
+
+        file.account_id.should eq(bucket.account_id)
+        file.account_id.should eq(ENV["B2_ACCOUNT_ID"])
+        file.bucket_id.should eq(bucket.id)
+        file.name.should eq("test.txt")
+        file.size.should eq("hello world".bytesize)
+        file.sha1.should eq("2aae6c35c94fcfb415dbe95f408b9ce91ee846ed")
+        file.content_type.should eq("text/plain")
+        file.file_info.size.should eq(0)
+        file.action.should eq("upload")
+        file.upload_timestamp.should be_close(Time.now, 1.minute)
+
+        str = nil
+        B2.test_client.download_file_by_name(bucket, file.name) { |io| str = io.gets_to_end }
+        str.should eq("hello world")
       ensure
         begin
           B2.test_client.delete_file_version(file) if file
