@@ -10,6 +10,19 @@ module Pomfire
                        errno.errno == Errno::ECONNRESET
   end
 
+  def self.elapsed_text(elapsed)
+    minutes = elapsed.total_minutes
+    return "#{minutes.round(2)}m" if minutes >= 1
+
+    seconds = elapsed.total_seconds
+    return "#{seconds.round(2)}s" if seconds >= 1
+
+    millis = elapsed.total_milliseconds
+    return "#{millis.round(2)}ms" if millis >= 1
+
+    "#{(millis * 1000).round(2)}µs"
+  end
+
   def self.handle_request(ctx, file_cache)
     file_name = ctx.request.path.lstrip '/'
 
@@ -22,6 +35,7 @@ module Pomfire
       return
     end
 
+    time_start = Time.now
     res = file_cache.get_file(file_name) do |io, res|
       case res
       when .cached?
@@ -34,7 +48,7 @@ module Pomfire
         ctx.response.content_type = mime_type = `file -b --mime-type #{io.path}`.strip
       end
 
-      puts "Serving: #{file_name} #{mime_type} #{res}"
+      puts "Serving: #{file_name} #{mime_type} #{res} first byte in #{elapsed_text(Time.now - time_start)}"
 
       eat_client_errors do
         IO.copy(io, ctx.response)
