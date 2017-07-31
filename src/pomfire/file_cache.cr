@@ -36,9 +36,11 @@ class Pomfire::FileCache
 
     begin
       @mutex.synchronize do
-        @b2.download_file_by_name(@b2_bucket, name) do |io|
+        @b2.download_file_by_name(@b2_bucket, name) do |io, metadata|
           File.open(local_file_path, "w") do |file|
+            io = OpenSSL::DigestIO.new(io, "sha1")
             IO.copy(io, file)
+            raise "Invalid download, try again!" unless io.hexdigest == metadata.sha1
           end
         end
       end
