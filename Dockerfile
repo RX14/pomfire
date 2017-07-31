@@ -3,7 +3,9 @@ FROM crystallang/crystal:0.23.1
 ARG uid=9703
 ARG gid=9703
 
-RUN useradd --system -u $uid -U pomfire
+RUN apt-get update \
+ && apt-get install -y file \
+ && useradd --system -u $uid -U pomfire
 
 CMD ["/pomfire"]
 
