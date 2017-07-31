@@ -26,7 +26,15 @@ module Pomfire
 
       puts "Serving: #{file_name} #{mime_type} #{res}"
 
-      IO.copy(io, ctx.response)
+      begin
+        IO.copy(io, ctx.response)
+      rescue ex : Errno
+        if ex.errno == Errno::EPIPE
+          # ignore
+        else
+          raise ex
+        end
+      end
     end
 
     if res.missing?
