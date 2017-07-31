@@ -57,8 +57,12 @@ describe B2::Client do
         file.upload_timestamp.should be_close(Time.now, 1.minute)
 
         str = nil
-        B2.test_client.download_file_by_name(bucket, file.name) { |io| str = io.gets_to_end }
+        metadata = B2.test_client.download_file_by_name(bucket, file.name) { |io| str = io.gets_to_end }
         str.should eq("hello world")
+        metadata.id.should eq(file.id)
+        metadata.name.should eq("test.txt")
+        metadata.sha1.should eq("2aae6c35c94fcfb415dbe95f408b9ce91ee846ed")
+        metadata.file_info.size.should eq(0)
       ensure
         begin
           B2.test_client.delete_file_version(file) if file

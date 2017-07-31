@@ -66,6 +66,35 @@ module B2
     })
   end
 
+  struct FileDownloadMetadata
+    getter id : String
+    getter name : String
+    getter sha1 : String
+    getter file_info : Hash(String, String)
+
+    def initialize(@id, @name, @sha1, @file_info)
+    end
+
+    def self.from_headers(headers)
+      id = headers["X-Bz-File-Id"]
+      name = headers["X-Bz-File-Name"]
+      sha1 = headers["X-Bz-Content-Sha1"]
+
+      file_info = Hash(String, String).new
+      headers.each do |key, values|
+        next unless values.size == 1
+        value = values[0]
+
+        if key.starts_with? "X-Bz-Info-"
+          key = key["X-Bz-Info-".size..-1]
+          file_info[key] = value
+        end
+      end
+
+      self.new(id, name, sha1, file_info)
+    end
+  end
+
   struct DeleteFileVersionResponse
     JSON.mapping({
       file_name: {type: String, key: "fileName"},

@@ -107,11 +107,13 @@ class B2::Client
     delete_bucket(bucket.id)
   end
 
-  def download_file_by_name(bucket : String, name : String)
+  def download_file_by_name(bucket : String, name : String) : FileDownloadMetadata
     headers = HTTP::Headers{"Authorization" => authorisation.authorisation_token}
     HTTP::Client.get(download_url(bucket, name), headers) do |response|
       if response.status_code == 200
-        yield response.body_io
+        metadata = FileDownloadMetadata.from_headers(response.headers)
+        yield response.body_io, metadata
+        return metadata
       else
         error = ErrorResponse.from_json(response.body_io)
         raise APIError.new(error)
