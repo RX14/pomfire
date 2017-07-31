@@ -3,12 +3,21 @@ require "./b2"
 require "./pomfire/*"
 
 module Pomfire
+  def self.eat_epipe
+    yield
+  rescue errno : Errno
+    raise errno unless errno.errno == Errno::EPIPE
+  end
+
   def self.handle_request(ctx, file_cache)
     file_name = ctx.request.path.lstrip '/'
 
     if file_name == ""
       # Root
-      ctx.response.puts "aww.moe is in readonly mode, uploads coming soon!"
+      eat_epipe do
+        ctx.response.puts "aww.moe is in readonly mode, uploads coming soon!"
+        ctx.response.flush
+      end
       return
     end
 
@@ -26,24 +35,27 @@ module Pomfire
 
       puts "Serving: #{file_name} #{mime_type} #{res}"
 
-      begin
+      eat_epipe do
         IO.copy(io, ctx.response)
-      rescue ex : Errno
-        if ex.errno == Errno::EPIPE
-          # ignore
-        else
-          raise ex
-        end
       end
     end
 
     if res.missing?
       ctx.response.status_code = 404
-      ctx.response.puts "Not Found"
+      eat_epipe do
+        ctx.response.puts "Not Found"
+      end
+    end
+
+    eat_epipe do
+      ctx.response.flush
     end
   rescue ex
     ctx.response.status_code = 500
-    ctx.response.puts "#{ex.message} (#{ex.class})"
+    eat_epipe do
+      ctx.response.puts "#{ex.message} (#{ex.class})"
+      ctx.response.flush
+    end
     ex.inspect_with_backtrace(STDERR)
   end
 
