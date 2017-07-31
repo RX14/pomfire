@@ -31,15 +31,13 @@ module B2
     end
   end
 
-  alias JSONScalar = String | Int::Primitive | Float::Primitive | Bool | Nil
-
   struct Bucket
     JSON.mapping({
       account_id:      {type: String, key: "accountId"},
       id:              {type: String, key: "bucketId"},
       name:            {type: String, key: "bucketName"},
       type:            {type: BucketType, key: "bucketType"},
-      bucket_info:     {type: Hash(String, JSONScalar), key: "bucketInfo"},
+      bucket_info:     {type: Hash(String, String), key: "bucketInfo"},
       lifecycle_rules: {type: Array(LifecycleRule), key: "lifecycleRules"},
       revision:        Int32,
     })
@@ -62,7 +60,7 @@ module B2
       size:             {type: Int64, key: "contentLength"},
       sha1:             {type: String, key: "contentSha1"},
       content_type:     {type: String, key: "contentType"},
-      file_info:        {type: Hash(String, JSONScalar), key: "fileInfo"},
+      file_info:        {type: Hash(String, String), key: "fileInfo"},
       action:           String,
       upload_timestamp: {type: Time, key: "uploadTimestamp", converter: TimestampConverter},
     })
