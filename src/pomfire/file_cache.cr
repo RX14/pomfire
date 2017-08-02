@@ -66,6 +66,7 @@ class Pomfire::FileCache
   end
 
   private def file_path(name)
+    raise "Invalid path" if name.includes? ".."
     File.join(@file_dir, name)
   end
 
