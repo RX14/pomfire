@@ -24,6 +24,7 @@ class Pomfire::FileCache
   end
 
   def get_file(name : String) : FileStatus
+    name = normalise_name(name)
     return FileStatus::Missing if missing? name
 
     local_file_path = file_path(name)
@@ -62,12 +63,34 @@ class Pomfire::FileCache
   end
 
   def put_file(name : String, io : IO) : Nil
+    name = normalise_name(name)
     clear_missing(name)
   end
 
   private def file_path(name)
-    raise "Invalid path" if name.includes? ".."
     File.join(@file_dir, name)
+  end
+
+  private def normalise_name(name)
+    reader = Char::Reader.new(name)
+    last_was_slash? = false
+    name = String.build do |str|
+      reader.each do |char|
+        if {'\\', '/'}.includes? char
+          str << '/' unless last_was_slash?
+          last_was_slash? = true
+        else
+          str << char
+          last_was_slash? = false
+        end
+      end
+    end
+
+    name.split('/') do |segment|
+      raise "Invalid Path" if segment == ".."
+    end
+
+    name
   end
 
   private def missing?(name : String)
