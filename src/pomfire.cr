@@ -23,7 +23,7 @@ module Pomfire
   end
 
   def self.handle_request(ctx, file_cache)
-    file_name = ctx.request.path.lstrip '/'
+    file_name = URI.unescape(ctx.request.path).lstrip '/'
 
     if file_name == ""
       # Root
