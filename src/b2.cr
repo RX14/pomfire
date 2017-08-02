@@ -108,17 +108,44 @@ class B2::Client
   end
 
   def download_file_by_name(bucket : String, name : String) : FileDownloadMetadata
-    headers = HTTP::Headers{"Authorization" => authorisation.authorisation_token}
-    HTTP::Client.get(download_url(bucket, name), headers) do |response|
-      if response.status_code == 200
-        metadata = FileDownloadMetadata.from_headers(response.headers)
-        yield response.body_io, metadata
-        return metadata
-      else
-        error = ErrorResponse.from_json(response.body_io)
-        raise APIError.new(error)
+    delay = 1.second
+    error = nil
+    loop do
+      headers = HTTP::Headers{"Authorization" => authorisation.authorisation_token}
+      HTTP::Client.get(download_url(bucket, name), headers) do |response|
+        if response.status_code == 200
+          metadata = FileDownloadMetadata.from_headers(response.headers)
+          yield response.body_io, metadata
+          return metadata
+        else
+          error = ErrorResponse.from_json(response.body_io)
+
+          if error.status == 429 && (retry_after = response.headers["Retry-After"]?)
+            # Too many requests
+            sleep retry_after.to_i.seconds
+
+            # Delay for half a second, so the next request has a delay of 1
+            # second, effectively resetting the loop.
+            delay = 0.5.seconds
+          elsif error.status == 401 && error.code == "expired_auth_token"
+            authorise_account
+          elsif response.status_code == 408 || 500 <= response.status_code < 600
+            # Service error, retry
+          else
+            raise APIError.new(error)
+          end
+        end
+
+        nil
       end
+
+      sleep delay
+      delay *= 2
+
+      break if delay > 64.seconds
     end
+
+    raise APIError.new(error.not_nil!)
   end
 
   def download_file_by_name(bucket : Bucket, name : String)
