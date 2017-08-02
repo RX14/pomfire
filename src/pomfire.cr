@@ -6,8 +6,7 @@ module Pomfire
   def self.eat_client_errors
     yield
   rescue errno : Errno
-    raise errno unless errno.errno == Errno::EPIPE ||
-                       errno.errno == Errno::ECONNRESET
+    raise errno unless {Errno::EPIPE, Errno::ECONNRESET}.includes? errno.errno
   end
 
   def self.elapsed_text(elapsed)
