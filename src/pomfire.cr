@@ -44,6 +44,7 @@ module Pomfire
       end
 
       if io.is_a? File
+        ctx.response.content_length = io.size
         ctx.response.content_type = mime_type = `file -b --mime-type #{io.path}`.strip
       end
 
