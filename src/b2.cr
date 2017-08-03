@@ -33,6 +33,7 @@ class B2::Client
     uri.user = @account_id
     uri.password = @application_key
 
+    puts "Authorising account!"
     @authorisation = call("GET", uri, type: AuthoriseAccountResponse, auth: false)
   end
 
