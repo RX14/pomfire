@@ -4,8 +4,12 @@ class Pomfire::FileCache
   @file_dir : String
   @missing_cache = Hash(String, Bool).new
   @mutex = Mutex.new
+  @max_size : UInt64
 
-  def initialize(@b2 = B2::Client.new, @b2_bucket = ENV["POMF_B2_BUCKET"], @file_dir = ENV["POMF_CACHE_DIR"])
+  def initialize(@b2 = B2::Client.new,
+                 @b2_bucket = ENV["POMF_B2_BUCKET"],
+                 @file_dir = ENV["POMF_CACHE_DIR"],
+                 @max_size = human_parse(ENV["POMF_CACHE_MAX_SIZE"]))
     spawn do
       loop do
         size = @mutex.@queue.try(&.size)
@@ -13,6 +17,13 @@ class Pomfire::FileCache
           puts "#{size} fibers waiting on b2!"
         end
         sleep 1.second
+      end
+    end
+
+    spawn do
+      loop do
+        ensure_cache_size
+        sleep 5.minutes
       end
     end
   end
@@ -65,6 +76,62 @@ class Pomfire::FileCache
   def put_file(name : String, io : IO) : Nil
     name = normalise_name(name)
     clear_missing(name)
+  end
+
+  private def ensure_cache_size
+    puts "Running cleanup..."
+
+    delete_count = 0
+    time = Time.measure do
+      total_size = 0_u64
+      children = Dir.new(@file_dir).each_child.compact_map do |entry|
+        filename = File.join(@file_dir, entry)
+        stat = File.stat(filename)
+        next nil unless stat.file?
+
+        total_size += stat.size
+        {name: filename, size: stat.size}
+      end
+      children = children.to_a
+
+      next unless total_size > @max_size
+
+      target_size = @max_size * 95 / 100
+      while total_size > target_size
+        random_index = rand(0..children.size)
+        random_child = children.delete_at(random_index)
+
+        begin
+          File.delete(random_child[:name])
+          total_size -= random_child[:size]
+          delete_count += 1
+        rescue ex
+          STDERR.print "FAILED TO DELETE FILE: "
+          ex.inspect_with_backtrace(STDERR)
+        end
+      end
+    end
+
+    puts "Cleanup deleted #{delete_count} files in #{time.total_milliseconds}ms"
+  end
+
+  private def human_parse(str)
+    case str[-1].upcase
+    when 'K'
+      factor = 1024
+    when 'M'
+      factor = 1024 * 1024
+    when 'G'
+      factor = 1024 * 1024 * 1024
+    else
+      factor = 1
+    end
+
+    if factor != 1
+      str = str.rchop
+    end
+
+    str.to_u64 * factor
   end
 
   private def file_path(name)
