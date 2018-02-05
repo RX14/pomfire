@@ -106,7 +106,7 @@ class Pomfire::FileCache
 
       target_size = @max_size * 95 / 100
       while total_size > target_size
-        random_index = rand(0..children.size)
+        random_index = rand(0..children.size - 1)
         random_child = children.delete_at(random_index)
 
         begin
