@@ -6,11 +6,11 @@ private module SpecMethods
   extend Spec::Methods
 end
 
-def it(*args, **kwargs, &block)
+def it(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   if ENV["B2_ACCOUNT_ID"]? && ENV["B2_APPLICATION_KEY"]?
-    SpecMethods.it(*args, **kwargs, &block)
+    SpecMethods.it(description, file: file, line: line, end_line: end_line, &block)
   else
-    SpecMethods.pending(*args, **kwargs, &block)
+    SpecMethods.pending(description, file: file, line: line, end_line: end_line, &block)
   end
 end
 

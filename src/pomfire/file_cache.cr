@@ -9,7 +9,10 @@ class Pomfire::FileCache
   def initialize(@b2 = B2::Client.new,
                  @b2_bucket = ENV["POMF_B2_BUCKET"],
                  @file_dir = ENV["POMF_CACHE_DIR"],
-                 @max_size = human_parse(ENV["POMF_CACHE_MAX_SIZE"]))
+                 max_size = ENV["POMF_CACHE_MAX_SIZE"])
+    max_size = human_parse(max_size) if max_size.is_a? String
+    @max_size = max_size
+
     spawn do
       loop do
         size = @mutex.@queue.try(&.size)
@@ -125,9 +128,9 @@ class Pomfire::FileCache
     when 'K'
       factor = 1024
     when 'M'
-      factor = 1024 * 1024
+      factor = 1024**2
     when 'G'
-      factor = 1024 * 1024 * 1024
+      factor = 1024**3
     else
       factor = 1
     end
@@ -136,7 +139,7 @@ class Pomfire::FileCache
       str = str.rchop
     end
 
-    str.to_u64 * factor
+    (str.to_f64 * factor).to_u64
   end
 
   private def file_path(name)
