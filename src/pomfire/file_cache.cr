@@ -25,7 +25,12 @@ class Pomfire::FileCache
 
     spawn do
       loop do
-        ensure_cache_size
+        begin
+          ensure_cache_size
+        rescue ex
+          STDERR.print "Error while ensuring cache size:"
+          ex.inspect_with_backtrace(STDERR)
+        end
         sleep 5.minutes
       end
     end
