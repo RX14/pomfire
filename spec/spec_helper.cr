@@ -47,7 +47,7 @@ def with_file(name, contents)
 end
 
 def with_tempdir
-  tempdir = File.join("/tmp", SecureRandom.hex)
+  tempdir = File.join("/tmp", Random::Secure.hex)
   Dir.mkdir(tempdir)
   yield tempdir
 ensure

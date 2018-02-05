@@ -1,4 +1,3 @@
-require "secure_random"
 require "../spec_helper"
 
 describe Pomfire::FileCache do

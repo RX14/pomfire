@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.23.1
+FROM crystallang/crystal:0.24.1
 
 ARG uid=9703
 ARG gid=9703

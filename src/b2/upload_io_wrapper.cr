@@ -1,7 +1,5 @@
 # :nodoc:
-class B2::UploadIOWrapper
-  include IO
-
+class B2::UploadIOWrapper < IO
   def initialize(@io : IO, @size : Int64)
     raise ArgumentError.new "Negative read_size" if @size < 0
     @digest = OpenSSL::Digest.new("SHA1")
