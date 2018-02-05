@@ -49,11 +49,9 @@ class Pomfire::FileCache
     begin
       @mutex.synchronize do
         @b2.download_file_by_name(@b2_bucket, name) do |io, metadata|
-          File.open(local_file_path, "w") do |file|
-            io = OpenSSL::DigestIO.new(io, "sha1")
-            IO.copy(io, file)
-            raise "Invalid download, try again!" unless io.hexdigest == metadata.sha1
-          end
+          io = OpenSSL::DigestIO.new(io, "sha1")
+          put_file(name, io)
+          raise "Invalid download, try again!" unless io.hexdigest == metadata.sha1
         end
       end
 
@@ -66,16 +64,23 @@ class Pomfire::FileCache
         set_missing(name)
         return FileStatus::Missing
       else
+        clear_missing(name)
         raise ex
       end
+    rescue ex
+      clear_missing(name)
+      raise ex
     end
-
-    raise "BUG: unreachable"
   end
 
   def put_file(name : String, io : IO) : Nil
     name = normalise_name(name)
-    clear_missing(name)
+    local_file_path = file_path(name)
+
+    @mutex.synchronize do
+      File.write(local_file_path, io)
+      clear_missing(name)
+    end
   end
 
   private def ensure_cache_size
@@ -138,6 +143,7 @@ class Pomfire::FileCache
     File.join(@file_dir, name)
   end
 
+  # This method *must* be idempotent.
   private def normalise_name(name)
     reader = Char::Reader.new(name)
     last_was_slash? = false
