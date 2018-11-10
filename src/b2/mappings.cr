@@ -104,11 +104,11 @@ module B2
 
   module TimestampConverter
     def self.to_json(value, builder)
-      builder.scalar(value.epoch_ms)
+      builder.scalar(value.to_unix_ms)
     end
 
     def self.from_json(parser)
-      Time.epoch_ms(parser.read_int)
+      Time.unix_ms(parser.read_int)
     end
   end
 end

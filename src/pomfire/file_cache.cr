@@ -99,11 +99,11 @@ class Pomfire::FileCache
       total_size = 0_u64
       children = Dir.new(@file_dir).each_child.compact_map do |entry|
         filename = File.join(@file_dir, entry)
-        stat = File.stat(filename)
-        next nil unless stat.file?
+        info = File.info(filename)
+        next nil unless info.file?
 
-        total_size += stat.size
-        {name: filename, size: stat.size}
+        total_size += info.size
+        {name: filename, size: info.size}
       end
       children = children.to_a
 
