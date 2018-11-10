@@ -34,7 +34,7 @@ describe B2::Client do
       bucket.type.should eq(B2::BucketType::AllPublic)
       bucket.bucket_info["foo"]?.should eq("bar")
       bucket.lifecycle_rules.should eq(lifecycle_rules)
-      bucket.revision.should eq(1)
+      bucket.revision.should be >= 1
     ensure
       B2.test_client.delete_bucket(bucket) if bucket
     end
