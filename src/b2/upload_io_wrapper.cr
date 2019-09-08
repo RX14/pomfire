@@ -40,7 +40,7 @@ class B2::UploadIOWrapper < IO
     end
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     raise IO::Error.new "Can't write to UploadIOWrapper"
   end
 

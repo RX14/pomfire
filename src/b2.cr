@@ -212,7 +212,7 @@ class B2::Client
       headers["Authorization"] = upload_data.authorisation_token
 
       begin
-        file_or_error, retry? = perform_upload_request(upload_data, headers, io)
+        file_or_error, retry = perform_upload_request(upload_data, headers, io)
         if file_or_error.is_a? File
           # Succeeded, return
           return file_or_error
@@ -220,10 +220,10 @@ class B2::Client
           error = file_or_error
 
           # Failed, raise unless we want to retry
-          raise file_or_error unless retry?
+          raise file_or_error unless retry
 
           # Ugly hack to communicate a delay reset
-          delay = retry? if retry?.is_a? Time::Span
+          delay = retry if retry.is_a? Time::Span
         end
       end
 

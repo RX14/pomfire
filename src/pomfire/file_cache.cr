@@ -109,7 +109,7 @@ class Pomfire::FileCache
 
       next unless total_size > @max_size
 
-      target_size = @max_size * 95 / 100
+      target_size = @max_size * 95 // 100
       while total_size > target_size
         random_index = rand(0..children.size - 1)
         random_child = children.delete_at(random_index)
@@ -154,15 +154,15 @@ class Pomfire::FileCache
   # This method *must* be idempotent.
   private def normalise_name(name)
     reader = Char::Reader.new(name)
-    last_was_slash? = false
+    last_was_slash = false
     name = String.build do |str|
       reader.each do |char|
         if {'\\', '/'}.includes? char
-          str << '/' unless last_was_slash?
-          last_was_slash? = true
+          str << '/' unless last_was_slash
+          last_was_slash = true
         else
           str << char
-          last_was_slash? = false
+          last_was_slash = false
         end
       end
     end

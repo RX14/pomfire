@@ -23,7 +23,7 @@ module Pomfire
   end
 
   def self.handle_request(ctx, file_cache)
-    file_name = URI.unescape(ctx.request.path).lstrip '/'
+    file_name = URI.decode(ctx.request.path).lstrip '/'
 
     if file_name == ""
       # Root
@@ -34,7 +34,7 @@ module Pomfire
       return
     end
 
-    time_start = Time.now
+    time_start = Time.monotonic
     res = file_cache.get_file(file_name) do |io, res|
       case res
       when .cached?
@@ -48,7 +48,7 @@ module Pomfire
         ctx.response.content_type = mime_type = `file -b --mime-type #{io.path}`.strip
       end
 
-      puts "Serving: #{file_name} #{mime_type} #{res} first byte in #{elapsed_text(Time.now - time_start)}"
+      puts "Serving: #{file_name} #{mime_type} #{res} first byte in #{elapsed_text(Time.monotonic - time_start)}"
 
       eat_client_errors do
         IO.copy(io, ctx.response)
@@ -78,12 +78,13 @@ module Pomfire
     # Uses settings from ENV by default
     file_cache = Pomfire::FileCache.new
 
-    middleware = [HTTP::LogHandler.new]
+    server = HTTP::Server.new([HTTP::LogHandler.new]) { |ctx| handle_request(ctx, file_cache) }
+
     host = ENV["POMF_BIND_HOST"]? || "127.0.0.1"
     port = (ENV["POMF_PORT"]? || 80).to_i
-    server = HTTP::Server.new(host, port, middleware) { |ctx| handle_request(ctx, file_cache) }
+    address = server.bind_tcp(host, port)
 
-    puts "Listening on #{URI.new(scheme: "http", host: host, port: port)}"
+    puts "Listening on http://#{address}"
     server.listen
   end
 end
