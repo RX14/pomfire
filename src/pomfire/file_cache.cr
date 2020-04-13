@@ -3,7 +3,7 @@ class Pomfire::FileCache
   @b2_bucket : String
   @file_dir : String
   @missing_cache = Hash(String, Bool).new
-  @mutex = Mutex.new
+  @mutex = Mutex.new(:reentrant)
   @max_size : UInt64
 
   def initialize(@b2 = B2::Client.new,
@@ -15,7 +15,7 @@ class Pomfire::FileCache
 
     spawn do
       loop do
-        size = @mutex.@queue.try(&.size)
+        size = @mutex.@queue_count.lazy_get
         if size && size != 0
           puts "#{size} fibers waiting on b2!"
         end

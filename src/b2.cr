@@ -7,9 +7,9 @@ require "./b2/*"
 #     puts "==> #{request.method} #{request.resource} #{request.version}"
 #     p request.headers
 
-#     start_time = Time.now
+#     start_time = Time.monotonic
 #     previous_def(request) do |response|
-#       puts "<== #{response.status_code} in #{(Time.now - start_time).total_milliseconds}ms"
+#       puts "<== #{response.status_code} in #{(Time.monotonic - start_time).total_milliseconds}ms"
 #       p response.headers
 
 #       wrapped_io = IO::Memory.new(response.body_io.gets_to_end)
@@ -190,7 +190,7 @@ class B2::Client
 
   private def upload_file_single(bucket, file_name, size, sha1_hash = nil, content_type = "b2/x-auto")
     headers = HTTP::Headers{
-      "X-Bz-File-Name" => URI.escape(file_name),
+      "X-Bz-File-Name" => URI.encode(file_name),
       "Content-Type"   => content_type,
     }
 
@@ -268,9 +268,9 @@ class B2::Client
 
       nil
     end
-  rescue timeout : IO::Timeout
+  rescue timeout : IO::TimeoutError
     return timeout, true
-  rescue errno : Errno
+  rescue errno : IO::Error
     return errno, true
   end
 

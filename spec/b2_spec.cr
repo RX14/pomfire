@@ -54,7 +54,7 @@ describe B2::Client do
         file.content_type.should eq("text/plain")
         file.file_info.size.should eq(0)
         file.action.should eq("upload")
-        file.upload_timestamp.should be_close(Time.now, 1.minute)
+        file.upload_timestamp.should be_close(Time.utc, 1.minute)
 
         str = nil
         metadata = B2.test_client.download_file_by_name(bucket, file.name) { |io| str = io.gets_to_end }

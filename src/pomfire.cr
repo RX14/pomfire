@@ -5,8 +5,8 @@ require "./pomfire/*"
 module Pomfire
   def self.eat_client_errors
     yield
-  rescue errno : Errno
-    raise errno unless {Errno::EPIPE, Errno::ECONNRESET}.includes? errno.errno
+  rescue error : IO::Error
+    raise error unless {Errno::EPIPE, Errno::ECONNRESET}.includes? error.os_error
   end
 
   def self.elapsed_text(elapsed)
